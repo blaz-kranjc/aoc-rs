@@ -3,7 +3,7 @@ fn sum_ints_until(n: i32) -> i32 {
 }
 
 fn main() {
-    let mut crab_positions = aoc::get_input(21, 7)
+    let crab_positions = aoc::get_input(21, 7)
         .trim()
         .split(',')
         .filter_map(|s| s.parse::<i32>().ok())
