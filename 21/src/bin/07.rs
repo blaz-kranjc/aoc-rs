@@ -8,7 +8,6 @@ fn main() {
         .split(',')
         .filter_map(|s| s.parse::<i32>().ok())
         .collect::<Vec<_>>();
-    crab_positions.sort();
     let linear = crab_positions
         .iter()
         .map(|p| crab_positions.iter().map(|x| (x - p).abs()).sum::<i32>())
