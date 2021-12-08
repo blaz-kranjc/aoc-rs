@@ -11,12 +11,14 @@ impl FromStr for Segments {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut result = [false; 7];
         for c in s.chars() {
-            let index = c as usize - 'a' as usize;
-            if index < 7 {
-                result[index] = true;
-            } else {
+            if c < 'a' || c > 'g' {
                 bail!("Unknown character in segment");
             }
+            let index = c as usize - 'a' as usize;
+            if result[index] {
+                bail!("Duplicated segment");
+            }
+            result[index] = true;
         }
         Ok(Segments(result))
     }
@@ -41,8 +43,7 @@ struct Display([i8; 4]);
 
 impl Display {
     fn value(&self) -> i32 {
-        let [w, x, y, z] = self.0;
-        w as i32 * 1000 + x as i32 * 100 + y as i32 * 10 + z as i32
+        self.0.iter().fold(0, |acc, &v| acc * 10 + v as i32)
     }
 }
 
@@ -59,12 +60,12 @@ impl FromStr for ScrambledDisplay {
         let separator_id = s.find(SEPARATOR).context("missing separator")?;
         let privates = s[..separator_id]
             .split(' ')
-            .filter_map(|s| Segments::from_str(s).ok())
-            .collect::<Vec<Segments>>();
+            .map(Segments::from_str)
+            .collect::<anyhow::Result<Vec<_>>>()?;
         let publics = s[separator_id + SEPARATOR.len()..]
             .split(' ')
-            .filter_map(|s| Segments::from_str(s).ok())
-            .collect::<Vec<Segments>>();
+            .map(Segments::from_str)
+            .collect::<anyhow::Result<Vec<_>>>()?;
         if privates.len() != 10 || publics.len() != 4 {
             bail!("Wrong number of digits");
         }
