@@ -146,6 +146,10 @@ impl ScrambledDisplay {
     }
 }
 
+fn is_simple(n: i8) -> bool {
+    n == 1 || n == 4 || n == 7 || n == 8
+}
+
 fn main() {
     let displays = aoc::get_input(21, 8)
         .split('\n')
@@ -156,11 +160,7 @@ fn main() {
         "Part 1: {}",
         displays
             .iter()
-            .map(|d| d
-                .0
-                .iter()
-                .filter(|&&i| i == 1 || i == 4 || i == 7 || i == 8)
-                .count())
+            .map(|d| d.0.iter().filter(|&&i| is_simple(i)).count())
             .sum::<usize>()
     );
     println!(
