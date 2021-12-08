@@ -116,8 +116,9 @@ fn main() {
     let displays = aoc::get_input(21, 8)
         .split('\n')
         .filter_map(|s| ScrambledDisplay::from_str(s).ok())
-        .filter_map(|d| d.read().ok())
-        .collect::<Vec<_>>();
+        .map(|d| d.read())
+        .collect::<anyhow::Result<Vec<_>>>()
+        .expect("not able to read all displays");
     println!(
         "Part 1: {}",
         displays
