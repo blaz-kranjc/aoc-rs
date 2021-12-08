@@ -68,7 +68,6 @@ impl FromStr for ScrambledDisplay {
         if privates.len() != 10 || publics.len() != 4 {
             bail!("Wrong number of digits");
         }
-        // TODO find a good way to create these values
         Ok(ScrambledDisplay {
             private: array_init(|i| privates[i]),
             public: array_init(|i| publics[i]),
@@ -77,49 +76,21 @@ impl FromStr for ScrambledDisplay {
 }
 
 impl ScrambledDisplay {
-    // TODO this is very ugly
+    fn find_digit<'a>(&'a self, f: impl Fn(&&Segments) -> bool) -> anyhow::Result<&'a Segments> {
+        self.private.iter().find(f).context("missing digit")
+    }
+
     fn resolve(&self) -> anyhow::Result<[&Segments; 10]> {
-        let privates_it = self.private.iter();
-        let one = privates_it
-            .clone()
-            .find(|d| d.n_active() == 2)
-            .context("no 1")?;
-        let four = privates_it
-            .clone()
-            .find(|d| d.n_active() == 4)
-            .context("no 4")?;
-        let seven = privates_it
-            .clone()
-            .find(|d| d.n_active() == 3)
-            .context("no 7")?;
-        let eight = privates_it
-            .clone()
-            .find(|d| d.n_active() == 7)
-            .context("no 8")?;
-        let six = privates_it
-            .clone()
-            .find(|d| d.n_active() == 6 && !d.contains_all(seven))
-            .context("no 6")?;
-        let nine = privates_it
-            .clone()
-            .find(|d| d.n_active() == 6 && d.contains_all(four))
-            .context("no 9")?;
-        let zero = privates_it
-            .clone()
-            .find(|d| d.n_active() == 6 && **d != *nine && **d != *six)
-            .context("no 0")?;
-        let three = privates_it
-            .clone()
-            .find(|d| d.n_active() == 5 && d.contains_all(one))
-            .context("no 3")?;
-        let five = privates_it
-            .clone()
-            .find(|d| d.n_active() == 5 && six.contains_all(d))
-            .context("no 5")?;
-        let two = privates_it
-            .clone()
-            .find(|d| d.n_active() == 5 && **d != *three && **d != *five)
-            .context("no 2")?;
+        let one = self.find_digit(|d| d.n_active() == 2)?;
+        let four = self.find_digit(|d| d.n_active() == 4)?;
+        let seven = self.find_digit(|d| d.n_active() == 3)?;
+        let eight = self.find_digit(|d| d.n_active() == 7)?;
+        let six = self.find_digit(|d| d.n_active() == 6 && !d.contains_all(seven))?;
+        let nine = self.find_digit(|d| d.n_active() == 6 && d.contains_all(four))?;
+        let zero = self.find_digit(|d| d.n_active() == 6 && **d != *nine && **d != *six)?;
+        let three = self.find_digit(|d| d.n_active() == 5 && d.contains_all(one))?;
+        let five = self.find_digit(|d| d.n_active() == 5 && six.contains_all(d))?;
+        let two = self.find_digit(|d| d.n_active() == 5 && **d != *three && **d != *five)?;
         Ok([zero, one, two, three, four, five, six, seven, eight, nine])
     }
 
