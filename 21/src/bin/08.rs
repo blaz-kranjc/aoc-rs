@@ -1,4 +1,5 @@
 use anyhow::{bail, Context};
+use array_init::array_init;
 use std::str::FromStr;
 
 // TODO should be a bitset, but no bitset in std
@@ -69,19 +70,8 @@ impl FromStr for ScrambledDisplay {
         }
         // TODO find a good way to create these values
         Ok(ScrambledDisplay {
-            private: [
-                privates[0],
-                privates[1],
-                privates[2],
-                privates[3],
-                privates[4],
-                privates[5],
-                privates[6],
-                privates[7],
-                privates[8],
-                privates[9],
-            ],
-            public: [publics[0], publics[1], publics[2], publics[3]],
+            private: array_init(|i| privates[i]),
+            public: array_init(|i| publics[i]),
         })
     }
 }
