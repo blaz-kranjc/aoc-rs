@@ -55,9 +55,9 @@ impl FromStr for Grid {
     }
 }
 
-fn fill_basin(grid: &Grid, i: usize, visited: &mut Vec<bool>) -> usize {
+fn fill_basin(grid: &Grid, origin: usize, visited: &mut Vec<bool>) -> usize {
     let mut count = 0;
-    let mut to_visit = vec![i];
+    let mut to_visit = vec![origin];
     while !to_visit.is_empty() {
         let next = to_visit.pop().unwrap();
         if visited[next] {
@@ -66,12 +66,11 @@ fn fill_basin(grid: &Grid, i: usize, visited: &mut Vec<bool>) -> usize {
         visited[next] = true;
         if grid.data[next] != 9 {
             count += 1;
-            let mut added = grid
-                .neighbors(next)
-                .into_iter()
-                .filter(|&i| !visited[i])
-                .collect();
-            to_visit.append(&mut added);
+            for n in grid.neighbors(next) {
+                if !visited[n] && !to_visit.contains(&n) {
+                    to_visit.push(n);
+                }
+            }
         }
     }
     count
