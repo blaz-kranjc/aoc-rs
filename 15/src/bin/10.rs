@@ -1,10 +1,9 @@
 // TODO is there any way to not brute force this?
 
-// TODO this is allocating like crazy, maybe vectors would be a better use as string in rust are quite naughty :)
 // TODO this is a very implicit way of calculating the result, try to rewrite this more functionally?
-fn next(seq: &str) -> String {
-    let mut result = "".to_owned();
-    let mut iter = seq.chars();
+fn next(seq: &[i8]) -> Vec<i8> {
+    let mut result = vec![];
+    let mut iter = seq.iter();
     let mut count = 1;
     let mut curr = iter.next();
     loop {
@@ -16,8 +15,8 @@ fn next(seq: &str) -> String {
             count += 1;
             continue;
         } else {
-            result.push_str(char::from_digit(count, 10).unwrap().to_string().as_ref());
-            result.push_str(curr.unwrap().to_string().as_ref());
+            result.push(count as i8);
+            result.push(*curr.unwrap() as i8);
             curr = next;
             count = 1;
         }
@@ -25,12 +24,17 @@ fn next(seq: &str) -> String {
     result
 }
 
-fn advance(seq: &str, n: u32) -> String {
+fn advance(seq: &[i8], n: u32) -> Vec<i8> {
     (0..n).fold(seq.to_owned(), |acc, _| next(&acc))
 }
 
 fn main() {
-    let sequence = aoc::get_input(15, 10).trim().to_owned();
+    let sequence = aoc::get_input(15, 10)
+        .trim()
+        .chars()
+        .map(|c| c.to_digit(10).map(|d| d as i8))
+        .collect::<Option<Vec<_>>>()
+        .expect("Invalid input");
 
     println!("Part 1: {}", advance(&sequence, 40).len());
     println!("Part 2: {}", advance(&sequence, 50).len());
