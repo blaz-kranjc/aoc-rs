@@ -120,7 +120,7 @@ fn basins(grid: &Grid) -> Vec<usize> {
 
 fn main() {
     let caves = Grid::from_str(aoc::get_input(21, 9).trim()).expect("Invalid grid provided");
-    let minimas = (0..caves.len())
+    let local_minimums = (0..caves.len())
         .map(|i| (i, caves.data[i]))
         .filter(|&(i, v)| {
             let (r, c) = caves.from_index(i);
@@ -130,11 +130,18 @@ fn main() {
                 .map(|(r, c)| caves.at(r, c))
                 .all(|n_v| n_v > v)
         })
-        .map(|(_, v)| v as i32 + 1)
-        .sum::<i32>();
+        .collect::<Vec<_>>();
+
+    println!(
+        "Part 1: {}",
+        local_minimums
+            .into_iter()
+            .map(|(_, v)| v as i32 + 1)
+            .sum::<i32>()
+    );
+
     let mut basins = basins(&caves);
     basins.sort();
-    println!("Part 1: {}", minimas);
     println!(
         "Part 2: {}",
         basins.iter().rev().take(3).fold(1, |acc, v| acc * v)
