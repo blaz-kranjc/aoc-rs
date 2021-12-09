@@ -9,39 +9,21 @@ struct Grid {
 }
 
 impl Grid {
-    fn index(&self, row: usize, column: usize) -> usize {
-        row * self.n_columns + column
-    }
-
-    fn len(&self) -> usize {
-        self.data.len()
-    }
-
-    fn from_index(&self, n: usize) -> (usize, usize) {
-        (n / self.n_columns, n % self.n_columns)
-    }
-
-    fn at(&self, row: usize, column: usize) -> i8 {
-        self.data[self.index(row, column)]
-    }
-
-    fn rows(&self) -> usize {
-        self.data.len() / self.n_columns
-    }
-
-    fn neighbors(&self, row: usize, column: usize) -> Vec<(usize, usize)> {
+    fn neighbors(&self, i: usize) -> Vec<usize> {
         let mut result = vec![];
-        if row > 0 {
-            result.push((row - 1, column));
+        let to_index = |row: usize, col: usize| row * self.n_columns + col;
+        let (r, c) = (i / self.n_columns, i % self.n_columns);
+        if r > 0 {
+            result.push(to_index(r - 1, c));
         }
-        if column > 0 {
-            result.push((row, column - 1));
+        if r < (self.data.len() / self.n_columns) - 1 {
+            result.push(to_index(r + 1, c));
         }
-        if column < self.n_columns - 1 {
-            result.push((row, column + 1))
+        if c > 0 {
+            result.push(to_index(r, c - 1));
         }
-        if row < self.rows() - 1 {
-            result.push((row + 1, column))
+        if c < self.n_columns - 1 {
+            result.push(to_index(r, c + 1));
         }
         result
     }
@@ -50,68 +32,59 @@ impl Grid {
 impl FromStr for Grid {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (values, columns) = s.split('\n').fold(Ok((vec![], None)), |v, s| {
-            if v.is_err() {
-                return v;
-            }
-            let (mut values, n_cols) = v.unwrap();
-            let mut vs = s
-                .chars()
-                .map(|c| c.to_digit(10).map(|d| d as i8))
-                .collect::<Option<Vec<_>>>()
-                .context("unknown character")?;
-            let v_len = vs.len();
-            values.append(&mut vs);
-            if let Some(l) = n_cols {
-                if l != v_len {
-                    bail!("Column size is not the same across rows ")
-                }
-            }
-            Ok((values, Some(v_len)))
-        })?;
-        let columns = columns.context("could not read matrix")?;
+        let rows = s
+            .split('\n')
+            .map(|r| {
+                r.chars()
+                    .map(|c| c.to_digit(10).map(|n| n as i8))
+                    .collect::<Option<Vec<_>>>()
+            })
+            .collect::<Option<Vec<_>>>()
+            .context("Invalid input characters")?;
+        if rows.is_empty() {
+            bail!("No rows supplied");
+        }
+        let n_columns = rows[0].len();
+        if rows.iter().skip(1).any(|v| v.len() != n_columns) {
+            bail!("Not all rows of the same size");
+        }
         Ok(Grid {
-            data: values,
-            n_columns: columns,
+            data: rows.into_iter().flatten().collect(),
+            n_columns,
         })
     }
 }
 
-fn find_basin(grid: &Grid, i: usize) -> Vec<bool> {
-    let mut result = vec![false; grid.len()];
+fn fill_basin(grid: &Grid, i: usize, visited: &mut Vec<bool>) -> usize {
+    let mut count = 0;
     let mut to_visit = vec![i];
     while !to_visit.is_empty() {
         let next = to_visit.pop().unwrap();
+        if visited[next] {
+            continue;
+        }
+        visited[next] = true;
         if grid.data[next] != 9 {
-            result[next] = true;
-            let (row, col) = grid.from_index(next);
+            count += 1;
             let mut added = grid
-                .neighbors(row, col)
+                .neighbors(next)
                 .into_iter()
-                .map(|(r, c)| grid.index(r, c))
-                .filter(|&i| !result[i])
+                .filter(|&i| !visited[i])
                 .collect();
             to_visit.append(&mut added);
         }
     }
-    result
+    count
 }
 
 fn basins(grid: &Grid) -> Vec<usize> {
     let mut basins = vec![];
-    let mut visited = vec![false; grid.len()];
+    let mut visited = vec![false; grid.data.len()];
     for i in 0..visited.len() {
         if !visited[i] {
-            let basin = find_basin(grid, i);
-            let mut count = 0;
-            for (i, &v) in basin.iter().enumerate() {
-                if v {
-                    count += 1;
-                    visited[i] = true;
-                }
-            }
-            if count > 0 {
-                basins.push(count);
+            let basin = fill_basin(grid, i, &mut visited);
+            if basin > 0 {
+                basins.push(basin);
             }
         }
     }
@@ -120,16 +93,9 @@ fn basins(grid: &Grid) -> Vec<usize> {
 
 fn main() {
     let caves = Grid::from_str(aoc::get_input(21, 9).trim()).expect("Invalid grid provided");
-    let local_minimums = (0..caves.len())
+    let local_minimums = (0..caves.data.len())
         .map(|i| (i, caves.data[i]))
-        .filter(|&(i, v)| {
-            let (r, c) = caves.from_index(i);
-            caves
-                .neighbors(r, c)
-                .into_iter()
-                .map(|(r, c)| caves.at(r, c))
-                .all(|n_v| n_v > v)
-        })
+        .filter(|&(i, v)| caves.neighbors(i).into_iter().all(|i| caves.data[i] > v))
         .collect::<Vec<_>>();
 
     println!(
