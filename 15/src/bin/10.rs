@@ -1,23 +1,21 @@
-// TODO is there any way to not brute force this?
-
 // TODO this is a very implicit way of calculating the result, try to rewrite this more functionally?
-fn next(seq: &[i8]) -> Vec<i8> {
+fn look_say(seq: &[i8]) -> Vec<i8> {
     let mut result = vec![];
     let mut iter = seq.iter();
     let mut count = 1;
-    let mut curr = iter.next();
+    let mut current = iter.next();
     loop {
-        if curr.is_none() {
+        if current.is_none() {
             break;
         }
         let next = iter.next();
-        if curr.eq(&next) {
+        if current.eq(&next) {
             count += 1;
             continue;
         } else {
             result.push(count as i8);
-            result.push(*curr.unwrap() as i8);
-            curr = next;
+            result.push(*current.unwrap() as i8);
+            current = next;
             count = 1;
         }
     }
@@ -25,7 +23,7 @@ fn next(seq: &[i8]) -> Vec<i8> {
 }
 
 fn advance(seq: &[i8], n: u32) -> Vec<i8> {
-    (0..n).fold(seq.to_owned(), |acc, _| next(&acc))
+    (0..n).fold(seq.to_owned(), |acc, _| look_say(&acc))
 }
 
 fn main() {
