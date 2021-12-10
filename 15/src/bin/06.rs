@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{bail, Context};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::cmp;
@@ -69,7 +69,7 @@ impl FromStr for Instruction {
         }
         let parts = INSTRUCTION_REGEX
             .captures(s)
-            .ok_or(anyhow!("Invalid instruction layout"))?;
+            .context("Invalid instruction layout")?;
         let rectangle = Rectangle(
             Point(parts["x1"].parse::<usize>()?, parts["y1"].parse::<usize>()?),
             Point(parts["x2"].parse::<usize>()?, parts["y2"].parse::<usize>()?),
@@ -78,7 +78,7 @@ impl FromStr for Instruction {
             "turn on" => Ok(Instruction::TurnOn(rectangle)),
             "turn off" => Ok(Instruction::TurnOff(rectangle)),
             "toggle" => Ok(Instruction::Toggle(rectangle)),
-            _ => Err(anyhow!("Invalid instruction type")),
+            _ => bail!("Invalid instruction type"),
         }
     }
 }
