@@ -56,9 +56,9 @@ fn main() {
         .trim()
         .split('\n')
         .map(str::to_owned)
+        .map(|s| classify_line(&s))
         .collect::<Vec<_>>();
 
-    let lines = lines.iter().map(|s| classify_line(&s)).collect::<Vec<_>>();
     let corrupted_scores = lines
         .iter()
         .filter_map(|s| {
