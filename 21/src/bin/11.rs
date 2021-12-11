@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anyhow::{bail, Context};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct Grid {
     data: Vec<i8>,
     n_columns: usize,
@@ -67,56 +67,47 @@ impl FromStr for Grid {
     }
 }
 
-fn count_flashes(grid: &mut Grid, t: i32) -> i32 {
-    let mut result = 0;
-    for _ in 1..=t {
-        let mut to_trigger = (0..grid.data.len()).collect::<Vec<_>>();
-        let mut triggered = vec![false; grid.data.len()];
-        while !to_trigger.is_empty() {
-            let i = to_trigger.pop().unwrap();
-            grid.data[i] += 1;
-            if grid.data[i] > 9 && !triggered[i] {
-                result += 1;
-                triggered[i] = true;
-                to_trigger.append(&mut grid.neighbors(i));
-            }
-        }
-        for i in 0..grid.data.len() {
-            if grid.data[i] > 9 {
-                grid.data[i] = 0;
-            }
+fn simulate_step(grid: &mut Grid) -> usize {
+    let mut to_trigger = (0..grid.data.len()).collect::<Vec<_>>();
+    let mut triggered = vec![false; grid.data.len()];
+    while !to_trigger.is_empty() {
+        let i = to_trigger.pop().unwrap();
+        grid.data[i] += 1;
+        if grid.data[i] > 9 && !triggered[i] {
+            triggered[i] = true;
+            to_trigger.append(&mut grid.neighbors(i));
         }
     }
-    result
-}
-
-fn first_synced(grid: &mut Grid) -> i32 {
-    for i in 1.. {
-        let mut to_trigger = (0..grid.data.len()).collect::<Vec<_>>();
-        let mut triggered = vec![false; grid.data.len()];
-        while !to_trigger.is_empty() {
-            let i = to_trigger.pop().unwrap();
-            grid.data[i] += 1;
-            if grid.data[i] > 9 && !triggered[i] {
-                triggered[i] = true;
-                to_trigger.append(&mut grid.neighbors(i));
-            }
-        }
-        if triggered.iter().all(|&x| x) {
-            return i;
-        }
-        for i in 0..grid.data.len() {
-            if grid.data[i] > 9 {
-                grid.data[i] = 0;
-            }
+    for i in 0..grid.data.len() {
+        if grid.data[i] > 9 {
+            grid.data[i] = 0;
         }
     }
-    unreachable!()
+    triggered.into_iter().filter(|&x| x).count()
 }
 
 fn main() {
     let mut octopuses = Grid::from_str(aoc::get_input(21, 11).trim()).expect("Invalid input");
 
-    println!("Part 1: {}", count_flashes(&mut octopuses.clone(), 100));
-    println!("Part 2: {}", first_synced(&mut octopuses));
+    let mut synced = None;
+    let mut flashes = 0;
+    for i in 1..=100 {
+        let result = simulate_step(&mut octopuses);
+        flashes += result;
+        if result == octopuses.data.len() {
+            synced = Some(i);
+        }
+    }
+    println!("Part 1: {}", flashes);
+
+    for i in 101.. {
+        if synced.is_some() {
+            break;
+        }
+        let result = simulate_step(&mut octopuses);
+        if result == octopuses.data.len() {
+            synced = Some(i);
+        }
+    }
+    println!("Part 2: {}", synced.unwrap());
 }
