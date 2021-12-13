@@ -98,9 +98,9 @@ fn display(points: &[Point]) {
     for y in 0..=limits.1 {
         for x in 0..=limits.0 {
             if points.contains(&Point { x, y }) {
-                print!("#");
+                print!("█");
             } else {
-                print!(".");
+                print!(" ");
             }
         }
         println!("");
