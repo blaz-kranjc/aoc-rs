@@ -40,8 +40,10 @@ dependencies = [
  "anyhow",
  "aoc",
  "array-init",
+ "lazy_static",
  "num-integer",
  "partition",
+ "regex",
  "strum",
  "strum_macros",
 ]
